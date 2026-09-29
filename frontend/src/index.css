@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #13261c;
+  background: #e7efe8;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+::selection {
+  background: #dff56a;
+  color: #13261c;
+}
+
+:focus-visible {
+  outline: 2px solid #1c7a4a;
+  outline-offset: 2px;
+}
+
+.num {
+  @apply font-sans;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.grid-paper {
+  background-color: #e7efe8;
+  background-image:
+    linear-gradient(to right, rgba(19, 38, 28, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(19, 38, 28, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  margin: 0;
+}
