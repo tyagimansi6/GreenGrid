@@ -59,10 +59,10 @@ export default function Renewables() {
 
 function Stat({ label, value, detail, featured = false }) {
   return (
-    <div className={`rounded-[24px] p-5 shadow-card ${featured ? "bg-ink text-white" : "bg-white"}`}>
-      <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${featured ? "text-lime" : "text-mist"}`}>{label}</p>
+    <div className={`rounded-lg border border-line p-5 shadow-card ${featured ? "border-ink bg-ink text-ivory" : "bg-surface"}`}>
+      <p className={`text-[11px] font-medium uppercase tracking-[0.14em] ${featured ? "text-ivory/70" : "text-mist"}`}>{label}</p>
       <p className="num mt-2 text-3xl font-semibold">{value}</p>
-      <p className={`mt-1 text-xs ${featured ? "text-white/55" : "text-mist"}`}>{detail}</p>
+      <p className={`mt-1 text-xs ${featured ? "text-ivory/55" : "text-mist"}`}>{detail}</p>
     </div>
   );
 }

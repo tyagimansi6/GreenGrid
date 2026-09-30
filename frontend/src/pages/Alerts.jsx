@@ -24,7 +24,7 @@ export default function Alerts() {
       <StaleBanner message={error} />
       {alerts.length === 0 ? (
         <Panel>
-          <h2 className="font-display font-bold text-3xl">Every site is inside its warning line.</h2>
+          <h2 className="font-display text-2xl font-semibold">Every site is inside its warning line.</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-mist">
             GreenGrid will raise a warning when a meter reaches the warning threshold, and a critical alert as it closes on the contract limit.
           </p>
@@ -33,7 +33,7 @@ export default function Alerts() {
         <ul className="space-y-3">
           {alerts.map((site) => (
             <li key={site.code}>
-              <article className="rounded-[28px] bg-white p-5 shadow-card md:p-6">
+              <article className="rounded-lg border border-line bg-surface p-5 shadow-card md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-mist">
@@ -45,15 +45,15 @@ export default function Alerts() {
                 </div>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/80">{site.message}</p>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                  <div className="rounded-2xl bg-paper px-3 py-3">
+                  <div className="rounded-md bg-paper px-3 py-3">
                     <dt className="text-xs text-mist">Metered now</dt>
                     <dd className="num mt-1 text-xl font-semibold">{formatNumber(site.grid_kw)} kW</dd>
                   </div>
-                  <div className="rounded-2xl bg-paper px-3 py-3">
+                  <div className="rounded-md bg-paper px-3 py-3">
                     <dt className="text-xs text-mist">Contract</dt>
                     <dd className="num mt-1 text-xl font-semibold">{formatNumber(site.contracted_limit_kw)} kW</dd>
                   </div>
-                  <div className="rounded-2xl bg-paper px-3 py-3">
+                  <div className="rounded-md bg-paper px-3 py-3">
                     <dt className="text-xs text-mist">Since</dt>
                     <dd className="mt-1 text-xl font-semibold">{formatAgo(site.since)}</dd>
                     <dd className="text-xs text-mist">{formatPercent(site.utilization)} of limit · {headroomText(site.headroom_kw)}</dd>

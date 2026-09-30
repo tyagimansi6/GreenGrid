@@ -81,7 +81,7 @@ export default function Facilities() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search name, city, or code"
-              className="w-full rounded-full border border-line bg-paper py-2 pl-9 pr-3 text-sm outline-none focus:border-moss"
+              className="w-full rounded-md border border-line bg-paper py-2 pl-9 pr-3 text-sm outline-none focus:border-bronze"
             />
           </label>
           <div className="flex flex-wrap gap-1" role="group" aria-label="Filter by alert">
@@ -91,7 +91,7 @@ export default function Facilities() {
                 type="button"
                 aria-pressed={status === item.id}
                 onClick={() => setStatus(item.id)}
-                className={`rounded-full px-3 py-1.5 text-sm ${status === item.id ? "bg-ink text-white" : "bg-paper text-ink"}`}
+                className={`rounded-md px-3 py-1.5 text-sm ${status === item.id ? "bg-ink text-ivory" : "bg-paper text-ink"}`}
               >
                 {item.label}
               </button>
@@ -105,7 +105,7 @@ export default function Facilities() {
               type="button"
               aria-pressed={kind === item}
               onClick={() => setKind(item)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${kind === item ? "bg-lime text-ink" : "text-mist"}`}
+              className={`rounded-md px-3 py-1 text-xs font-medium ${kind === item ? "bg-ink text-ivory" : "text-mist"}`}
             >
               {item === "all" ? "Every type" : item}
             </button>
@@ -160,7 +160,7 @@ export default function Facilities() {
             <ul className="mt-5 space-y-3 md:hidden">
               {visible.map((site) => (
                 <li key={site.code}>
-                  <Link to={`/facilities/${site.code}`} className="block rounded-2xl bg-paper p-4">
+                  <Link to={`/facilities/${site.code}`} className="block rounded-lg border border-line bg-paper p-4">
                     <span className="flex items-center justify-between gap-2">
                       <span className="font-display font-semibold">{site.name}</span>
                       <StatusBadge status={site.status} />

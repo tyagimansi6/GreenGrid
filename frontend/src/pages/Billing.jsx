@@ -32,7 +32,7 @@ export default function Billing() {
 
       <Panel className="mt-4">
         <h2 className="font-display text-lg font-semibold">Cost by site</h2>
-        <p className="mt-1 text-sm text-mist">Green is energy, sage is demand, red is the overrun penalty.</p>
+        <p className="mt-1 text-sm text-mist">Slate is energy, sage is demand, clay is the overrun penalty.</p>
         <div className="mt-4">
           <CostChart data={sites} />
         </div>
@@ -85,10 +85,10 @@ export default function Billing() {
 
 function Money({ label, value, detail, featured = false, hot = false }) {
   return (
-    <div className={`rounded-[24px] p-5 shadow-card ${featured ? "bg-ink text-white" : "bg-white"}`}>
-      <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${featured ? "text-white/50" : "text-mist"}`}>{label}</p>
+    <div className={`rounded-lg border border-line p-5 shadow-card ${featured ? "bg-ink text-ivory" : "bg-surface"}`}>
+      <p className={`text-[11px] font-medium uppercase tracking-[0.14em] ${featured ? "text-ivory/55" : "text-mist"}`}>{label}</p>
       <p className={`num mt-2 text-3xl font-semibold ${hot ? "text-crit" : ""}`}>{formatMoney(value)}</p>
-      <p className={`mt-1 text-xs ${featured ? "text-white/55" : "text-mist"}`}>{detail}</p>
+      <p className={`mt-1 text-xs ${featured ? "text-ivory/55" : "text-mist"}`}>{detail}</p>
     </div>
   );
 }

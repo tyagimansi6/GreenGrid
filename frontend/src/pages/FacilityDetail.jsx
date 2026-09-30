@@ -87,7 +87,7 @@ export default function FacilityDetail() {
 
   return (
     <div>
-      <Link to="/facilities" className="text-sm font-medium text-moss">
+      <Link to="/facilities" className="inline-flex rounded-md border border-white/25 bg-[#f4f2eb]/72 px-3 py-1.5 text-sm font-medium text-olive backdrop-blur-sm">
         All facilities
       </Link>
       <div className="mt-3">
@@ -149,7 +149,7 @@ export default function FacilityDetail() {
         <h2 className="font-display text-lg font-semibold">Next 6 hours</h2>
         <ol className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {data.forecast.map((point) => (
-            <li key={point.t} className="min-w-[112px] rounded-2xl bg-paper px-3 py-3">
+              <li key={point.t} className="min-w-[112px] rounded-md border border-line bg-paper px-3 py-3">
               <p className="text-xs text-mist">{formatTime(point.t)}</p>
               <p className="num mt-1 text-xl font-semibold">{formatNumber(point.grid_kw)}</p>
               <p className="text-[11px] text-mist">kW grid</p>
@@ -243,7 +243,7 @@ export default function FacilityDetail() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-ivory disabled:opacity-60"
                 >
                   {saving ? "Saving…" : "Save contract"}
                 </button>

@@ -52,6 +52,18 @@ def _context():
     return {"now": now, "facilities": facilities, "grouped": grouped}
 
 
+def _history_cutoff(ctx, hours):
+    """Chart window. If the stored tape is older than the clock, follow the tape."""
+    latest = None
+    for readings in ctx["grouped"].values():
+        if readings and (latest is None or readings[-1].recorded_at > latest):
+            latest = readings[-1].recorded_at
+    wall = ctx["now"] - timedelta(hours=hours)
+    if latest is not None and latest < wall + timedelta(hours=hours) / 2:
+        return latest - timedelta(hours=hours)
+    return wall
+
+
 def _snapshot(facility, readings, now):
     last = readings[-1]
     grid_kw = max(0.0, last.grid_kw * live_multiplier(facility.id, now))
@@ -342,7 +354,7 @@ def build_dashboard():
     ctx = _context()
     summaries = build_summaries(ctx)
     billing = build_billing(ctx)
-    cutoff = ctx["now"] - timedelta(hours=24)
+    cutoff = _history_cutoff(ctx, 24)
     buckets = defaultdict(lambda: {"grid": 0.0, "load": 0.0, "solar": 0.0, "t": None})
     grid_kwh = solar_kwh = load_kwh = 0.0
     for facility in ctx["facilities"]:
@@ -416,7 +428,7 @@ def build_alerts():
 def build_renewables():
     ctx = _context()
     billing = build_billing(ctx)
-    cutoff = ctx["now"] - timedelta(hours=48)
+    cutoff = _history_cutoff(ctx, 48)
     buckets = defaultdict(lambda: {"grid": 0.0, "load": 0.0, "solar": 0.0, "t": None})
     for facility in ctx["facilities"]:
         for reading in ctx["grouped"].get(facility.id, []):
@@ -474,7 +486,7 @@ def build_facility_detail(code):
     current = _snapshot(facility, readings, ctx["now"])
     forecast = _forecast(facility, readings)
     billing_site = _site_billing(facility, readings)
-    cutoff = ctx["now"] - timedelta(hours=48)
+    cutoff = _history_cutoff(ctx, 48)
     history = [
         _series_point(reading.recorded_at, reading.grid_kw, reading.load_kw, reading.solar_kw)
         for reading in readings

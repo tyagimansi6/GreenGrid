@@ -1,18 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  Area,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatMoney, formatNumber, formatTick, spanHours } from "../format";
+import { theme } from "../theme";
+import TrendChart from "./TrendChart";
 
 function Tip({ active, payload, label, formatValue }) {
   if (!active || !payload?.length) return null;
@@ -20,8 +10,8 @@ function Tip({ active, payload, label, formatValue }) {
   if (!rows.length) return null;
   const render = formatValue || ((value) => `${formatNumber(value)} kW`);
   return (
-    <div className="rounded-xl bg-ink px-3 py-2 text-xs text-white shadow-lg">
-      <p className="mb-1 text-white/55">{label}</p>
+    <div className="rounded-md bg-ink px-3 py-2 text-xs text-ivory shadow-card">
+      <p className="mb-1 text-ivory/55">{label}</p>
       {rows.map((item) => (
         <p key={item.dataKey} className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5">
@@ -41,11 +31,11 @@ function LayerToggle({ on, color, label, onToggle }) {
       type="button"
       onClick={onToggle}
       aria-pressed={on}
-      className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs ${
-        on ? "border-ink/10 bg-paper text-ink" : "border-transparent text-mist"
+      className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs ${
+        on ? "border-line bg-paper text-ink" : "border-transparent text-mist"
       }`}
     >
-      <i className="h-2 w-2 rounded-full" style={{ background: on ? color : "#c5d0c8" }} />
+      <i className="h-2 w-2 rounded-full" style={{ background: on ? color : theme.line }} />
       {label}
     </button>
   );
@@ -80,102 +70,31 @@ export function DemandChart({ data, limit, warning, showForecast = false }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap gap-1.5">
-        <span className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper px-2.5 py-1 text-xs text-ink">
-          <i className="h-2 w-2 rounded-full bg-moss" />
+        <span className="inline-flex items-center gap-2 rounded-md border border-line bg-paper px-2.5 py-1 text-xs text-ink">
+          <i className="h-2 w-2 rounded-full bg-ink" />
           Grid demand
         </span>
-        <LayerToggle on={layers.load} color="#13261c" label="Building load" onToggle={() => toggle("load")} />
-        <LayerToggle on={layers.solar} color="#d0891a" label="Solar" onToggle={() => toggle("solar")} />
+        <LayerToggle on={layers.load} color={theme.olive} label="Building load" onToggle={() => toggle("load")} />
+        <LayerToggle on={layers.solar} color={theme.slate} label="Solar" onToggle={() => toggle("solar")} />
         {hasForecast && (
-          <LayerToggle on={layers.forecast} color="#3c6e91" label="Forecast" onToggle={() => toggle("forecast")} />
+          <LayerToggle on={layers.forecast} color={theme.sage} label="Forecast" onToggle={() => toggle("forecast")} />
         )}
       </div>
-      <div className="h-80 w-full min-w-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={labeled} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gridFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1c7a4a" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#1c7a4a" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#e3ebe6" vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: "#5c6d63", fontSize: 12 }} axisLine={false} tickLine={false} minTickGap={28} />
-            <YAxis
-              domain={[0, axisMax(peak)]}
-              tick={{ fill: "#5c6d63", fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={48}
-              tickFormatter={(value) => formatNumber(value)}
-            />
-            <Tooltip content={<Tip />} />
-            {warning ? (
-              <ReferenceLine
-                y={warning}
-                stroke="#b7791f"
-                strokeDasharray="4 4"
-                label={{ value: "Warning", fill: "#b7791f", fontSize: 11, position: "insideTopLeft" }}
-              />
-            ) : null}
-            {limit ? (
-              <ReferenceLine
-                y={limit}
-                stroke="#c83c3c"
-                strokeDasharray="4 4"
-                label={{ value: "Limit", fill: "#c83c3c", fontSize: 11, position: "insideTopLeft" }}
-              />
-            ) : null}
-            <Area
-              type="monotone"
-              dataKey="grid_kw"
-              name="Grid demand"
-              stroke="#1c7a4a"
-              strokeWidth={2.4}
-              fill="url(#gridFill)"
-              connectNulls={false}
-              isAnimationActive={false}
-            />
-            {layers.load && (
-              <Line
-                type="monotone"
-                dataKey="load_kw"
-                name="Building load"
-                stroke="#13261c"
-                strokeWidth={1.6}
-                dot={false}
-                connectNulls={false}
-                isAnimationActive={false}
-              />
-            )}
-            {layers.solar && (
-              <Line
-                type="monotone"
-                dataKey="solar_kw"
-                name="Solar"
-                stroke="#d0891a"
-                strokeWidth={1.8}
-                dot={false}
-                connectNulls={false}
-                isAnimationActive={false}
-              />
-            )}
-            {hasForecast && layers.forecast && (
-              <Line
-                type="monotone"
-                dataKey="forecast_kw"
-                name="Forecast"
-                stroke="#3c6e91"
-                strokeWidth={2}
-                strokeDasharray="5 4"
-                dot={false}
-                connectNulls={false}
-                isAnimationActive={false}
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      <TrendChart
+        data={labeled}
+        max={axisMax(peak)}
+        warning={warning}
+        limit={limit}
+        height={320}
+        series={[
+          { key: "grid_kw", name: "Grid demand", color: theme.ink, width: 2.4, fill: true },
+          layers.load ? { key: "load_kw", name: "Building load", color: theme.olive, width: 1.6 } : null,
+          layers.solar ? { key: "solar_kw", name: "Solar", color: theme.slate, width: 1.8 } : null,
+          hasForecast && layers.forecast
+            ? { key: "forecast_kw", name: "Forecast", color: theme.sage, width: 2.2, dash: "6 4", dots: true }
+            : null,
+        ].filter(Boolean)}
+      />
     </div>
   );
 }
@@ -185,19 +104,19 @@ export function CostChart({ data }) {
     <div className="h-72 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="#e3ebe6" vertical={false} />
-          <XAxis dataKey="code" tick={{ fill: "#5c6d63", fontSize: 12 }} axisLine={false} tickLine={false} />
+          <CartesianGrid stroke={theme.grid} vertical={false} />
+          <XAxis dataKey="code" tick={{ fill: theme.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fill: "#5c6d63", fontSize: 12 }}
+            tick={{ fill: theme.muted, fontSize: 12 }}
             axisLine={false}
             tickLine={false}
             width={72}
             tickFormatter={(value) => formatMoney(value)}
           />
           <Tooltip content={<Tip formatValue={formatMoney} />} />
-          <Bar dataKey="energy_charge" name="Energy" stackId="cost" fill="#1c7a4a" radius={[0, 0, 0, 0]} isAnimationActive={false} />
-          <Bar dataKey="demand_charge" name="Demand" stackId="cost" fill="#8fbfa3" isAnimationActive={false} />
-          <Bar dataKey="penalty" name="Penalty" stackId="cost" fill="#c83c3c" radius={[6, 6, 0, 0]} isAnimationActive={false} />
+          <Bar dataKey="energy_charge" name="Energy" stackId="cost" fill={theme.slate} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+          <Bar dataKey="demand_charge" name="Demand" stackId="cost" fill={theme.sage} isAnimationActive={false} />
+          <Bar dataKey="penalty" name="Penalty" stackId="cost" fill={theme.crit} radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>

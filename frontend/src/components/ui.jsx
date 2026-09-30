@@ -1,45 +1,11 @@
-import { CircleAlert, CircleCheck, TriangleAlert } from "lucide-react";
+import { statusMeta, default as StatusBadge } from "./StatusBadge";
 
-const STATUS = {
-  normal: {
-    label: "Normal",
-    icon: CircleCheck,
-    chip: "bg-moss/10 text-moss",
-    edge: "border-moss",
-  },
-  warning: {
-    label: "Warning",
-    icon: TriangleAlert,
-    chip: "bg-honey/15 text-honey",
-    edge: "border-honey",
-  },
-  critical: {
-    label: "Critical",
-    icon: CircleAlert,
-    chip: "bg-crit/10 text-crit",
-    edge: "border-crit",
-  },
-};
-
-export function statusMeta(status) {
-  return STATUS[status] || STATUS.critical;
-}
-
-export function StatusBadge({ status }) {
-  const meta = statusMeta(status);
-  const Icon = meta.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.chip}`}>
-      <Icon size={14} aria-hidden="true" />
-      {meta.label}
-    </span>
-  );
-}
+export { statusMeta, StatusBadge };
 
 export function Meter({ utilization, warningRatio = 0.8, criticalRatio = 0.95 }) {
   const width = Math.min(Math.max(utilization, 0), 1) * 100;
-  const meta = utilization >= criticalRatio ? STATUS.critical : utilization >= warningRatio ? STATUS.warning : STATUS.normal;
-  const bar = utilization >= criticalRatio ? "bg-crit" : utilization >= warningRatio ? "bg-honey" : "bg-moss";
+  const meta = utilization >= criticalRatio ? statusMeta("critical") : utilization >= warningRatio ? statusMeta("warning") : statusMeta("normal");
+  const bar = utilization >= criticalRatio ? "bg-crit" : utilization >= warningRatio ? "bg-honey" : "bg-canopy";
   return (
     <div
       className="relative h-2 w-full rounded-full bg-ink/10"
@@ -57,13 +23,13 @@ export function LivePulse({ updatedAt, light = false }) {
   if (!updatedAt) return null;
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs ${
-        light ? "bg-white/10 text-white/80" : "bg-white text-mist shadow-sm"
+      className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs ${
+        light ? "bg-white/10 text-ivory/80" : "border border-line bg-surface text-mist"
       }`}
     >
       <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${light ? "bg-lime" : "bg-moss"}`} />
-        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${light ? "bg-lime" : "bg-moss"}`} />
+        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${light ? "bg-sage" : "bg-canopy"}`} />
+        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${light ? "bg-sage" : "bg-canopy"}`} />
       </span>
       Live · {updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}
     </div>
@@ -72,10 +38,10 @@ export function LivePulse({ updatedAt, light = false }) {
 
 export function PageHeader({ eyebrow, title, lede, updatedAt }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-lg border border-white/25 bg-[#f4f2eb]/72 px-4 py-3 backdrop-blur-sm">
       <div className="max-w-2xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-moss">{eyebrow}</p>
-        <h1 className="mt-1 font-display font-bold text-4xl leading-none tracking-tight md:text-5xl">{title}</h1>
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-mist">{eyebrow}</p>
+        <h1 className="mt-1 font-display text-3xl font-semibold leading-tight tracking-tight md:text-4xl">{title}</h1>
         {lede && <p className="mt-3 text-sm leading-6 text-mist">{lede}</p>}
       </div>
       <LivePulse updatedAt={updatedAt} />
@@ -86,10 +52,10 @@ export function PageHeader({ eyebrow, title, lede, updatedAt }) {
 export function LoadingState() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading GreenGrid">
-      <div className="h-44 animate-pulse rounded-[28px] bg-white/80" />
+      <div className="h-28 animate-pulse rounded-lg border border-line bg-surface" />
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="h-80 animate-pulse rounded-[28px] bg-white/80 lg:col-span-2" />
-        <div className="h-80 animate-pulse rounded-[28px] bg-white/80" />
+        <div className="h-80 animate-pulse rounded-lg border border-line bg-surface lg:col-span-2" />
+        <div className="h-80 animate-pulse rounded-lg border border-line bg-surface" />
       </div>
     </div>
   );
@@ -97,8 +63,8 @@ export function LoadingState() {
 
 export function ErrorState({ message, onRetry }) {
   return (
-    <div className="rounded-[28px] bg-white p-8 shadow-card" role="alert">
-      <h2 className="font-display font-bold text-3xl">The GreenGrid API is offline</h2>
+    <div className="rounded-lg border border-line bg-surface p-8 shadow-card" role="alert">
+      <h2 className="font-display text-2xl font-semibold">The GreenGrid API is offline</h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-mist">{message}</p>
       <p className="mt-2 max-w-xl text-sm leading-6 text-mist">
         Start Django from the backend folder, then retry. The Vite dev server proxies /api to port 8000.
@@ -106,7 +72,7 @@ export function ErrorState({ message, onRetry }) {
       <button
         type="button"
         onClick={onRetry}
-        className="mt-5 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+        className="mt-5 rounded-md bg-ink px-4 py-2 text-sm font-medium text-ivory"
       >
         Retry
       </button>
@@ -117,14 +83,14 @@ export function ErrorState({ message, onRetry }) {
 export function StaleBanner({ message }) {
   if (!message) return null;
   return (
-    <p className="mb-4 rounded-2xl bg-honey/15 px-4 py-2 text-sm text-honey" role="status">
+    <p className="mb-4 rounded-md bg-honey/15 px-4 py-2 text-sm text-honey" role="status">
       Showing the last reading. {message}
     </p>
   );
 }
 
 const shellClass =
-  "mt-1.5 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink transition focus-within:border-moss";
+  "mt-1.5 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink transition focus-within:border-bronze";
 
 export function Field({ label, hint, children }) {
   return (
@@ -141,5 +107,5 @@ export function TextInput(props) {
 }
 
 export function Panel({ className = "", children }) {
-  return <section className={`rounded-[28px] bg-white p-5 shadow-card md:p-6 ${className}`}>{children}</section>;
+  return <section className={`rounded-lg border border-line bg-surface p-5 shadow-card md:p-6 ${className}`}>{children}</section>;
 }
