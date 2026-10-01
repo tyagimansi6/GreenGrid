@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { formatNumber } from "../format";
 import { theme } from "../theme";
 
@@ -57,7 +57,7 @@ function tickIndexes(count) {
   return indexes;
 }
 
-export default function TrendChart({ data = [], series = [], height = 320, max = 1, warning, limit }) {
+function TrendChart({ data = [], series = [], height = 320, max = 1, warning, limit }) {
   const frame = useRef(null);
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState(null);
@@ -72,20 +72,47 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
     return () => observer.disconnect();
   }, []);
 
-  const plotW = Math.max(width - PAD.left - PAD.right, 0);
-  const plotH = Math.max(height - PAD.top - PAD.bottom, 0);
-  const ceiling = Math.max(max, 1);
-  const last = Math.max(data.length - 1, 1);
-  const xAt = (index) => PAD.left + (index / last) * plotW;
-  const yAt = (value) => PAD.top + (1 - Number(value) / ceiling) * plotH;
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((step) => ceiling * step);
+  const geometry = useMemo(() => {
+    if (!width || !data.length) return null;
+    const plotW = Math.max(width - PAD.left - PAD.right, 0);
+    const plotH = Math.max(height - PAD.top - PAD.bottom, 0);
+    const ceiling = Math.max(max, 1);
+    const last = Math.max(data.length - 1, 1);
+    const xAt = (index) => PAD.left + (index / last) * plotW;
+    const yAt = (value) => PAD.top + (1 - Number(value) / ceiling) * plotH;
+    const yTicks = [0, 0.25, 0.5, 0.75, 1].map((step) => ceiling * step);
+    const areas = series.map((item) =>
+      item.fill ? { key: item.key, d: areaPath(data, item.key, xAt, yAt, yAt(0)), color: item.color } : null,
+    );
+    const lines = series.map((item) => ({
+      key: item.key,
+      d: linePath(data, item.key, xAt, yAt),
+      color: item.color,
+      width: item.width || 2,
+      dash: item.dash,
+    }));
+    const dots = series.flatMap((item) =>
+      item.dots
+        ? data.flatMap((point, index) =>
+            finite(point[item.key]) ? [{ key: `${item.key}-${index}`, cx: xAt(index), cy: yAt(point[item.key]), color: item.color }] : [],
+          )
+        : [],
+    );
+    const labels = tickIndexes(data.length).map((index) => ({
+      index,
+      x: xAt(index),
+      label: data[index].label,
+    }));
+    return { plotW, last, xAt, yAt, yTicks, areas, lines, dots, labels };
+  }, [data, series, width, height, max]);
 
   function move(event) {
-    if (!data.length || !plotW) return;
+    if (!geometry?.plotW) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - bounds.left;
-    const index = Math.round(((x - PAD.left) / plotW) * last);
-    setHover(Math.min(Math.max(index, 0), data.length - 1));
+    const index = Math.round(((x - PAD.left) / geometry.plotW) * geometry.last);
+    const next = Math.min(Math.max(index, 0), data.length - 1);
+    setHover((current) => (current === next ? current : next));
   }
 
   const active = hover != null ? data[hover] : null;
@@ -93,9 +120,12 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
     ? series.filter((item) => finite(active[item.key])).map((item) => ({ ...item, value: active[item.key] }))
     : [];
 
+  const xAt = geometry?.xAt;
+  const yAt = geometry?.yAt;
+
   return (
     <div ref={frame} className="relative w-full" style={{ height }}>
-      {width > 0 && data.length > 0 && (
+      {geometry && (
         <svg
           width={width}
           height={height}
@@ -104,7 +134,7 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
           onMouseMove={move}
           onMouseLeave={() => setHover(null)}
         >
-          {yTicks.map((tick) => (
+          {geometry.yTicks.map((tick) => (
             <g key={tick}>
               <line
                 x1={PAD.left}
@@ -148,32 +178,24 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
               </text>
             </g>
           )}
-          {series.map((item) =>
-            item.fill ? (
-              <path key={`${item.key}-fill`} d={areaPath(data, item.key, xAt, yAt, yAt(0))} fill={item.color} opacity="0.12" />
-            ) : null,
+          {geometry.areas.map((item) =>
+            item ? <path key={`${item.key}-fill`} d={item.d} fill={item.color} opacity="0.12" /> : null,
           )}
-          {series.map((item) => (
+          {geometry.lines.map((item) => (
             <path
               key={item.key}
-              d={linePath(data, item.key, xAt, yAt)}
+              d={item.d}
               fill="none"
               stroke={item.color}
-              strokeWidth={item.width || 2}
+              strokeWidth={item.width}
               strokeDasharray={item.dash}
               strokeLinejoin="round"
               strokeLinecap="round"
             />
           ))}
-          {series.map((item) =>
-            item.dots
-              ? data.map((point, index) =>
-                  finite(point[item.key]) ? (
-                    <circle key={`${item.key}-${index}`} cx={xAt(index)} cy={yAt(point[item.key])} r="3" fill={item.color} />
-                  ) : null,
-                )
-              : null,
-          )}
+          {geometry.dots.map((dot) => (
+            <circle key={dot.key} cx={dot.cx} cy={dot.cy} r="3" fill={dot.color} />
+          ))}
           {hover != null && (
             <g>
               <line
@@ -188,21 +210,21 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
               ))}
             </g>
           )}
-          {tickIndexes(data.length).map((index) => (
+          {geometry.labels.map((tick) => (
             <text
-              key={index}
-              x={xAt(index)}
+              key={tick.index}
+              x={tick.x}
               y={height - 8}
               textAnchor="middle"
               fill={theme.muted}
               fontSize="11"
             >
-              {data[index].label}
+              {tick.label}
             </text>
           ))}
         </svg>
       )}
-      {active && rows.length > 0 && (
+      {active && rows.length > 0 && xAt && (
         <div
           className="pointer-events-none absolute z-10 rounded-md bg-ink px-3 py-2 text-xs text-ivory shadow-card"
           style={{
@@ -225,3 +247,5 @@ export default function TrendChart({ data = [], series = [], height = 320, max =
     </div>
   );
 }
+
+export default memo(TrendChart);

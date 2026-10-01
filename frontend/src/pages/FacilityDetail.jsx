@@ -1,11 +1,75 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
 import { DemandChart } from "../components/Charts";
 import Gauge from "../components/Gauge";
+import TrendChart from "../components/TrendChart";
+import { theme } from "../theme";
 import { ErrorState, Field, LoadingState, PageHeader, Panel, StaleBanner, StatusBadge, TextInput } from "../components/ui";
 import { formatDayTime, formatMoney, formatNumber, formatTime, headroomText, joinForecast } from "../format";
 import { useDocumentTitle, usePoll } from "../hooks";
+
+const FORECAST_SERIES = [
+  { key: "demand_kw", name: "Forecast demand", color: theme.sage, width: 2.2, dots: true },
+];
+
+const MODEL_FACILITY_IDS = {
+  HARBOR: 1,
+  NORDC: 2,
+  CIVIC: 3,
+  LAKES: 4,
+  MERID: 5,
+  RIVER: 6,
+};
+
+function ModelForecastCurve({ code, gridKw, solarKw }) {
+  const facilityId = MODEL_FACILITY_IDS[String(code || "").toUpperCase()];
+  const load = useCallback(() => {
+    if (!facilityId || gridKw == null) return Promise.resolve(null);
+    const now = new Date();
+    return api.forecast(facilityId, {
+      temperature_c: 22.5,
+      humidity_pct: 55,
+      wind_speed_ms: 3.2,
+      previous_hour_demand_kw: Number(gridKw),
+      solar_generation_kw: Number(solarKw) || 0,
+      hour: now.getHours() + now.getMinutes() / 60,
+      day_of_week: (now.getDay() + 6) % 7,
+      month: now.getMonth() + 1,
+    });
+  }, [facilityId, gridKw, solarKw]);
+  const { data, error, loading } = usePoll(load, 15000);
+  const points = useMemo(
+    () =>
+      (data?.forecast || []).map((point) => ({
+        label: `+${point.hour_ahead}h`,
+        demand_kw: point.demand_kw,
+      })),
+    [data],
+  );
+  const peak = useMemo(() => points.reduce((max, point) => Math.max(max, point.demand_kw || 0), 1), [points]);
+  const ceiling = useMemo(() => Math.ceil(peak * 1.08), [peak]);
+
+  return (
+    <Panel className="mt-4">
+      <div data-testid="ml-forecast-curve">
+        <h2 className="font-display text-lg font-semibold">Saved-model forecast</h2>
+        <p className="mt-1 text-sm text-mist">
+          {data
+            ? `${data.model} · facility ${data.facility_id} · six hours from the live meter.`
+            : "Six-hour curve from the Django forecast endpoint."}
+        </p>
+        {error && <p className="mt-3 text-sm text-crit">{error}</p>}
+        {loading && !data && <p className="mt-4 text-sm text-mist">Requesting the live forecast…</p>}
+        {points.length > 0 && (
+          <div className="mt-4">
+            <TrendChart data={points} max={ceiling} height={240} series={FORECAST_SERIES} />
+          </div>
+        )}
+      </div>
+    </Panel>
+  );
+}
 
 const TONE = {
   critical: "border-crit/30 bg-crit/5",
@@ -41,11 +105,15 @@ export default function FacilityDetail() {
     setSaveError("");
   }, [data, code]);
 
+  const historySeries = useMemo(
+    () => (data ? joinForecast(data.history, data.forecast) : []),
+    [data],
+  );
+
   if (loading && !data) return <LoadingState />;
   if (!data) return <ErrorState message={error} onRetry={reload} />;
 
   const { facility, current, billing } = data;
-  const series = joinForecast(data.history, data.forecast);
   const limitPreview = Number(form?.contracted_limit_kw) || 0;
   const warningPreview = (limitPreview * (Number(form?.warning_pct) || 0)) / 100;
   const criticalPreview = (limitPreview * (Number(form?.critical_pct) || 0)) / 100;
@@ -87,7 +155,7 @@ export default function FacilityDetail() {
 
   return (
     <div>
-      <Link to="/facilities" className="inline-flex rounded-md border border-white/25 bg-[#f4f2eb]/72 px-3 py-1.5 text-sm font-medium text-olive backdrop-blur-sm">
+      <Link to="/facilities" className="inline-flex rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-olive">
         All facilities
       </Link>
       <div className="mt-3">
@@ -141,7 +209,7 @@ export default function FacilityDetail() {
         <h2 className="font-display text-lg font-semibold">Demand, last 48 hours</h2>
         <p className="mt-1 text-sm text-mist">{data.forecast_note} The dashed line is a regression on the hour of day and the previous hour.</p>
         <div className="mt-4">
-          <DemandChart data={series} limit={current.limit_kw} warning={current.warning_kw} showForecast />
+          <DemandChart data={historySeries} limit={current.limit_kw} warning={current.warning_kw} showForecast />
         </div>
       </Panel>
 
@@ -160,6 +228,8 @@ export default function FacilityDetail() {
           ))}
         </ol>
       </Panel>
+
+      <ModelForecastCurve code={facility.code} gridKw={current.grid_kw} solarKw={current.solar_kw} />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Panel>

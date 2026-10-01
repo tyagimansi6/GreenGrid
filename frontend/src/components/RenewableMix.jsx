@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatNumber, formatPercent } from "../format";
 import { theme } from "../theme";
@@ -13,14 +14,17 @@ function Tip({ active, payload }) {
   );
 }
 
-export default function RenewableMix({ solarKwh = 0, gridKwh = 0, renewableShare }) {
+function RenewableMix({ solarKwh = 0, gridKwh = 0, renewableShare }) {
   const solar = Number(solarKwh) || 0;
   const grid = Number(gridKwh) || 0;
   const total = solar + grid;
-  const data = [
-    { name: "Solar", value: solar, color: theme.slate },
-    { name: "Grid", value: grid, color: theme.bronze },
-  ];
+  const data = useMemo(
+    () => [
+      { name: "Solar", value: solar, color: theme.slate },
+      { name: "Grid", value: grid, color: theme.bronze },
+    ],
+    [solar, grid],
+  );
 
   return (
     <div>
@@ -45,7 +49,7 @@ export default function RenewableMix({ solarKwh = 0, gridKwh = 0, renewableShare
                   <Cell key={entry.name} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<Tip />} />
+              <Tooltip content={Tip} />
             </PieChart>
           </ResponsiveContainer>
         )}
@@ -89,3 +93,5 @@ export default function RenewableMix({ solarKwh = 0, gridKwh = 0, renewableShare
     </div>
   );
 }
+
+export default memo(RenewableMix);

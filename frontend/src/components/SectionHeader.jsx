@@ -4,7 +4,7 @@ export default function SectionHeader({ kicker, title, detail, aside, plain = fa
       className={
         plain
           ? "flex flex-wrap items-end justify-between gap-3"
-          : "flex flex-wrap items-end justify-between gap-3 rounded-lg border border-white/25 bg-[#f4f2eb]/72 px-4 py-3 backdrop-blur-sm"
+          : "flex flex-wrap items-end justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3"
       }
     >
       <div className="max-w-2xl">

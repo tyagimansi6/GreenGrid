@@ -59,4 +59,11 @@ export const api = {
   alerts: () => request("/api/alerts/"),
   billing: () => request("/api/billing/"),
   renewables: () => request("/api/renewables/"),
+  forecast: (facilityId, telemetry) => {
+    const params = new URLSearchParams();
+    Object.entries(telemetry || {}).forEach(([key, value]) => {
+      if (value != null && value !== "") params.set(key, String(value));
+    });
+    return request(`/api/forecast/${facilityId}/?${params}`);
+  },
 };

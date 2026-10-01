@@ -46,7 +46,7 @@ function Topbar({ onMenu }) {
   }, [notesOpen]);
 
   return (
-    <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-white/20 bg-[#e6e3da]/60 px-4 py-3 backdrop-blur-md md:px-8">
+    <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-[#e6e3da] px-4 py-3 md:px-8">
       <button
         type="button"
         className="rounded-md border border-line bg-surface p-2 text-ink md:hidden"

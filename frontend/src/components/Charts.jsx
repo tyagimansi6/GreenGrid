@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatMoney, formatNumber, formatTick, spanHours } from "../format";
 import { theme } from "../theme";
@@ -48,7 +48,7 @@ function axisMax(value) {
   return Math.ceil(padded / step) * step;
 }
 
-export function DemandChart({ data, limit, warning, showForecast = false }) {
+function DemandChartView({ data, limit, warning, showForecast = false }) {
   const [layers, setLayers] = useState({ load: false, solar: true, forecast: true });
   const span = spanHours(data);
   const labeled = useMemo(
@@ -64,6 +64,19 @@ export function DemandChart({ data, limit, warning, showForecast = false }) {
     return values.filter((value) => value != null);
   });
   const peak = Math.max(limit || 0, warning || 0, ...visibleValues, 1);
+  const ceiling = useMemo(() => axisMax(peak), [peak]);
+  const series = useMemo(
+    () =>
+      [
+        { key: "grid_kw", name: "Grid demand", color: theme.ink, width: 2.4, fill: true },
+        layers.load ? { key: "load_kw", name: "Building load", color: theme.olive, width: 1.6 } : null,
+        layers.solar ? { key: "solar_kw", name: "Solar", color: theme.slate, width: 1.8 } : null,
+        hasForecast && layers.forecast
+          ? { key: "forecast_kw", name: "Forecast", color: theme.sage, width: 2.2, dash: "6 4", dots: true }
+          : null,
+      ].filter(Boolean),
+    [layers.load, layers.solar, layers.forecast, hasForecast],
+  );
 
   const toggle = (key) => setLayers((current) => ({ ...current, [key]: !current[key] }));
 
@@ -80,26 +93,16 @@ export function DemandChart({ data, limit, warning, showForecast = false }) {
           <LayerToggle on={layers.forecast} color={theme.sage} label="Forecast" onToggle={() => toggle("forecast")} />
         )}
       </div>
-      <TrendChart
-        data={labeled}
-        max={axisMax(peak)}
-        warning={warning}
-        limit={limit}
-        height={320}
-        series={[
-          { key: "grid_kw", name: "Grid demand", color: theme.ink, width: 2.4, fill: true },
-          layers.load ? { key: "load_kw", name: "Building load", color: theme.olive, width: 1.6 } : null,
-          layers.solar ? { key: "solar_kw", name: "Solar", color: theme.slate, width: 1.8 } : null,
-          hasForecast && layers.forecast
-            ? { key: "forecast_kw", name: "Forecast", color: theme.sage, width: 2.2, dash: "6 4", dots: true }
-            : null,
-        ].filter(Boolean)}
-      />
+      <TrendChart data={labeled} max={ceiling} warning={warning} limit={limit} height={320} series={series} />
     </div>
   );
 }
 
-export function CostChart({ data }) {
+function CostTip(props) {
+  return <Tip {...props} formatValue={formatMoney} />;
+}
+
+function CostChartView({ data }) {
   return (
     <div className="h-72 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%">
@@ -113,7 +116,7 @@ export function CostChart({ data }) {
             width={72}
             tickFormatter={(value) => formatMoney(value)}
           />
-          <Tooltip content={<Tip formatValue={formatMoney} />} />
+          <Tooltip content={CostTip} />
           <Bar dataKey="energy_charge" name="Energy" stackId="cost" fill={theme.slate} radius={[0, 0, 0, 0]} isAnimationActive={false} />
           <Bar dataKey="demand_charge" name="Demand" stackId="cost" fill={theme.sage} isAnimationActive={false} />
           <Bar dataKey="penalty" name="Penalty" stackId="cost" fill={theme.crit} radius={[4, 4, 0, 0]} isAnimationActive={false} />
@@ -122,3 +125,6 @@ export function CostChart({ data }) {
     </div>
   );
 }
+
+export const DemandChart = memo(DemandChartView);
+export const CostChart = memo(CostChartView);

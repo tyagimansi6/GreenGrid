@@ -74,10 +74,19 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "greengrid_db",
+        "USER": "greengrid_user",
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "greengrid123"),
+        "HOST": "localhost",
+        "PORT": "3306",
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
+# Hosted deploys (Render) still pass a Postgres URL. Local runs use MySQL above.
 if os.environ.get("DATABASE_URL"):
     DATABASES["default"] = dj_database_url.parse(
         os.environ["DATABASE_URL"],

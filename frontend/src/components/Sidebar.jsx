@@ -70,7 +70,7 @@ function Sidebar({ open, collapsed, onClose, onToggle }) {
         />
       )}
       <aside
-        className={`app-nav no-print fixed inset-y-0 left-0 z-40 flex h-screen w-[248px] flex-col overflow-hidden bg-ink/80 text-ivory backdrop-blur-md md:sticky md:top-0 md:shrink-0 md:translate-x-0 ${
+        className={`app-nav no-print fixed inset-y-0 left-0 z-40 flex h-screen w-[248px] flex-col overflow-hidden bg-ink text-ivory md:sticky md:top-0 md:shrink-0 md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

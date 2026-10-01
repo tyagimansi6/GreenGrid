@@ -40,9 +40,9 @@ function computeLayout(context, coarse) {
   const byHeight = height * (small ? 0.13 : 0.16);
   const fontSize = Math.max(36, Math.floor(Math.min(preferred, byWidth, byHeight)));
 
-  let count = clamp(Math.round(fontSize * fontSize * 0.2), 1000, 4400);
-  if (small) count = Math.min(count, 1500);
-  if (coarse) count = Math.round(count * 0.85);
+  let count = clamp(Math.round(fontSize * fontSize * 0.12), 800, 2200);
+  if (small) count = Math.min(count, 1200);
+  if (coarse) count = Math.round(count * 0.7);
 
   const dprCap = small || coarse ? 1.5 : 2;
   const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
@@ -99,7 +99,7 @@ export default function ParticleWordmark({ onLayout }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     const box = canvas?.parentElement;
-    const context = canvas?.getContext("2d");
+    const context = canvas?.getContext("2d", { alpha: true, desynchronized: true });
     const measure = measureContext();
     if (!canvas || !box || !context || !measure) return undefined;
 
@@ -116,6 +116,8 @@ export default function ParticleWordmark({ onLayout }) {
     let frame = 0;
     let pending = 0;
     let disposed = false;
+    let pointerRect = null;
+    let steps = 0;
 
     function build(first) {
       const next = computeLayout(measure, coarse);
@@ -201,14 +203,16 @@ export default function ParticleWordmark({ onLayout }) {
 
     function step() {
       frame = 0;
-      if (disposed || !layout) return;
+      if (disposed || !layout || document.hidden) return;
 
       let localX = 0;
       let localY = 0;
       let radius = 0;
       let force = 0;
+      steps += 1;
       if (pointer.active && !reduce) {
-        const rect = canvas.getBoundingClientRect();
+        if (!pointerRect || steps % 8 === 0) pointerRect = canvas.getBoundingClientRect();
+        const rect = pointerRect;
         localX = ((pointer.x - rect.left) / rect.width - 0.5) * (canvas.width / layout.dpr);
         localY = ((pointer.y - rect.top) / rect.height - 0.5) * (canvas.height / layout.dpr);
         radius = layout.fontSize * (pointer.touch ? 0.62 : 0.5);
@@ -273,11 +277,21 @@ export default function ParticleWordmark({ onLayout }) {
     }
 
     function schedule() {
+      pointerRect = null;
       if (pending) return;
       pending = requestAnimationFrame(() => {
         pending = 0;
         build(false);
       });
+    }
+
+    function onVisibility() {
+      if (document.hidden) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        return;
+      }
+      wake();
     }
 
     function onPointerMove(event) {
@@ -321,6 +335,7 @@ export default function ParticleWordmark({ onLayout }) {
     window.addEventListener("pointercancel", onPointerEnd, { passive: true });
     root.addEventListener("pointerleave", onLeaveWindow);
     window.addEventListener("blur", onLeaveWindow);
+    document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("resize", schedule);
     window.addEventListener("orientationchange", schedule);
     window.visualViewport?.addEventListener("resize", schedule);
@@ -347,6 +362,7 @@ export default function ParticleWordmark({ onLayout }) {
       window.removeEventListener("pointercancel", onPointerEnd);
       root.removeEventListener("pointerleave", onLeaveWindow);
       window.removeEventListener("blur", onLeaveWindow);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("orientationchange", schedule);
       window.visualViewport?.removeEventListener("resize", schedule);

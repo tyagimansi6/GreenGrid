@@ -21,6 +21,7 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
   const leavingRef = useRef(leaving);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const copyRef = useRef(null);
+  const wakeMotion = useRef(() => {});
   const [interactive, setInteractive] = useState(false);
 
   const applyLayout = useCallback(({ fontSize }) => {
@@ -29,6 +30,7 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
 
   useEffect(() => {
     leavingRef.current = leaving;
+    wakeMotion.current();
   }, [leaving]);
 
   useEffect(() => {
@@ -57,24 +59,37 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
     const scale = { value: 1, v: 0 };
     let frame = 0;
 
+    function resting(state, target) {
+      return Math.abs(state.value - target) < 0.0015 && Math.abs(state.v) < 0.0015;
+    }
+
+    function wake() {
+      if (!frame) frame = requestAnimationFrame(tick);
+    }
+
+    wakeMotion.current = wake;
+
     function onMove(event) {
       pointerRef.current.x = event.clientX / window.innerWidth - 0.5;
       pointerRef.current.y = event.clientY / window.innerHeight - 0.5;
       pointerRef.current.active = true;
       cursor.x = event.clientX;
       cursor.y = event.clientY;
+      wake();
     }
 
     function tick() {
+      frame = 0;
       const targetX = leavingRef.current ? 0 : pointerRef.current.x;
       const targetY = leavingRef.current ? 0 : pointerRef.current.y;
+      const scaleTarget = hoverRef.current ? 1.22 : 1;
       spring(word, targetX, 0.02, 0.88);
       spring(wordY, targetY, 0.02, 0.88);
       spring(light, targetX, 0.007, 0.92);
       spring(lightY, targetY, 0.007, 0.92);
       spring(film, targetX, 0.012, 0.9);
       spring(filmY, targetY, 0.012, 0.9);
-      spring(scale, hoverRef.current ? 1.22 : 1, 0.07, 0.82);
+      spring(scale, scaleTarget, 0.07, 0.82);
 
       ring.x += (cursor.x - ring.x) * 0.16;
       ring.y += (cursor.y - ring.y) * 0.16;
@@ -83,20 +98,30 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
         wordRef.current.style.transform = `translate3d(${(-word.value * 7).toFixed(2)}px, ${(-wordY.value * 4.5).toFixed(2)}px, 0)`;
       }
       if (lightRef.current) {
-        lightRef.current.style.transform = `translate(-50%, -50%) translate3d(${(light.value * 5).toFixed(2)}px, ${(lightY.value * 3.5).toFixed(2)}px, 0)`;
+        lightRef.current.style.transform = `translate3d(-50%, -50%, 0) translate3d(${(light.value * 5).toFixed(2)}px, ${(lightY.value * 3.5).toFixed(2)}px, 0)`;
       }
       if (motionRef?.current) {
         motionRef.current.style.transform = `scale(1.03) translate3d(${(film.value * 2.5).toFixed(2)}px, ${(filmY.value * 1.8).toFixed(2)}px, 0)`;
       }
       if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${cursor.x}px, ${cursor.y}px, 0) translate(-50%, -50%)`;
+        dotRef.current.style.transform = `translate3d(${cursor.x}px, ${cursor.y}px, 0) translate3d(-50%, -50%, 0)`;
         dotRef.current.style.opacity = pointerRef.current.active && !leavingRef.current ? "1" : "0";
       }
       if (ringRef.current) {
-        ringRef.current.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0) translate(-50%, -50%) scale(${scale.value.toFixed(3)})`;
+        ringRef.current.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0) translate3d(-50%, -50%, 0) scale(${scale.value.toFixed(3)})`;
         ringRef.current.style.opacity = pointerRef.current.active && !leavingRef.current ? "1" : "0";
       }
-      frame = requestAnimationFrame(tick);
+      const ringSettled = Math.abs(ring.x - cursor.x) < 0.4 && Math.abs(ring.y - cursor.y) < 0.4;
+      const idle =
+        resting(word, targetX) &&
+        resting(wordY, targetY) &&
+        resting(light, targetX) &&
+        resting(lightY, targetY) &&
+        resting(film, targetX) &&
+        resting(filmY, targetY) &&
+        resting(scale, scaleTarget) &&
+        ringSettled;
+      if (!idle) frame = requestAnimationFrame(tick);
     }
 
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -140,11 +165,14 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
       if (total === 0) return;
       const luminance = total / count / 255;
       const shade = Math.min(1, Math.max(0, (luminance - 0.3) / 0.4));
-      node.style.setProperty("--shade", shade.toFixed(3));
+      const next = shade.toFixed(2);
+      if (node.dataset.shade === next) return;
+      node.dataset.shade = next;
+      node.style.setProperty("--shade", next);
     }
 
     sample();
-    const timer = window.setInterval(sample, 450);
+    const timer = window.setInterval(sample, 900);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -157,9 +185,11 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
             className="intro-word"
             onPointerEnter={() => {
               hoverRef.current = true;
+              wakeMotion.current();
             }}
             onPointerLeave={() => {
               hoverRef.current = false;
+              wakeMotion.current();
             }}
           >
             <span className="sr-only">{WORD}</span>
@@ -176,9 +206,11 @@ export default function CinematicIntro({ leaving, onEnter, motionRef }) {
           onClick={onEnter}
           onPointerEnter={() => {
             hoverRef.current = true;
+            wakeMotion.current();
           }}
           onPointerLeave={() => {
             hoverRef.current = false;
+            wakeMotion.current();
           }}
         >
           <span className="intro-explore-label">Explore</span>

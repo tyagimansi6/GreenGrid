@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#141a12" />
+    <title>Sign in · GreenGrid</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color: #1c2218;
+        background: #141a12;
+        font-family: Outfit, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+        background: #141a12;
+      }
+
+      a { color: inherit; }
+
+      .film {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: #141a12;
+        pointer-events: none;
+      }
+
+      .film-motion {
+        height: 100%;
+        width: 100%;
+        transform: scale(1.03) translate3d(0, 0, 0);
+        will-change: transform;
+        backface-visibility: hidden;
+      }
+
+      video {
+        display: block;
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        transform: translate3d(0, 0, 0);
+        backface-visibility: hidden;
+      }
+
+      .glow {
+        position: fixed;
+        left: 50%;
+        top: 38%;
+        z-index: 0;
+        width: min(360px, 34vw);
+        height: min(280px, 28vw);
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(244, 241, 232, 0.14), rgba(244, 241, 232, 0.03) 46%, transparent 72%);
+        mix-blend-mode: soft-light;
+        transform: translate3d(-50%, -50%, 0);
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 440px);
+        padding: 24px;
+        border: 1px solid #d5d1c6;
+        border-radius: 0.5rem;
+        background: #f4f2eb;
+        box-shadow: 0 8px 18px rgba(28, 34, 24, 0.06);
+        transform: translate3d(0, 0, 0);
+        color: #1c2218;
+      }
+
+      .mark {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #5e6558;
+      }
+
+      h1 {
+        margin: 8px 0 0;
+        font-family: Syne, sans-serif;
+        font-size: 1.875rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .lede {
+        margin: 8px 0 0;
+        color: #5e6558;
+        font-size: 0.875rem;
+        line-height: 1.5rem;
+      }
+
+      .switch {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        margin-top: 24px;
+        padding: 4px;
+        border: 1px solid #d5d1c6;
+        border-radius: 0.375rem;
+        background: rgba(230, 227, 218, 0.78);
+      }
+
+      .switch button {
+        border: 1px solid transparent;
+        border-radius: 0.375rem;
+        padding: 8px 12px;
+        background: transparent;
+        color: #5e6558;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .switch button[aria-selected="true"] {
+        border-color: #d5d1c6;
+        background: rgba(244, 242, 235, 0.92);
+        color: #1c2218;
+      }
+
+      form { margin-top: 20px; }
+
+      label {
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      label span {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #5e6558;
+      }
+
+      input {
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        padding: 8px 12px;
+        border: 1px solid #d5d1c6;
+        border-radius: 0.375rem;
+        background: rgba(244, 242, 235, 0.84);
+        color: #1c2218;
+        font: inherit;
+        font-size: 0.875rem;
+        transition: border-color 160ms ease;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #8f734c;
+      }
+
+      [hidden] { display: none !important; }
+
+      .error {
+        min-height: 1.25rem;
+        margin: 0 0 10px;
+        color: #8d4a40;
+        font-size: 0.875rem;
+      }
+
+      .submit {
+        width: 100%;
+        border: 0;
+        border-radius: 0.375rem;
+        padding: 8px 16px;
+        background: #1c2218;
+        color: #f3f0e7;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .submit:disabled { opacity: 0.6; cursor: progress; }
+
+      .back {
+        display: inline-block;
+        margin-top: 16px;
+        color: #3c4636;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      .back:hover { color: #1c2218; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .film-motion,
+        .glow { will-change: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="film" aria-hidden="true">
+      <div class="film-motion" id="film">
+        <video id="landscape" autoplay muted loop playsinline preload="auto" poster="/greengrid-poster.jpg">
+          <source src="/greengrid-landscape.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </div>
+    <div class="glow" id="glow" aria-hidden="true"></div>
+
+    <main class="card">
+      <p class="mark">GreenGrid</p>
+      <h1 id="title">Sign in</h1>
+      <p class="lede" id="lede">Use your work email to open the operating picture.</p>
+
+      <div class="switch" role="tablist" aria-label="Account">
+        <button type="button" id="tab-signin" role="tab" aria-selected="true" aria-controls="account-form">Sign In</button>
+        <button type="button" id="tab-register" role="tab" aria-selected="false" aria-controls="account-form">Register</button>
+      </div>
+
+      <form id="account-form">
+        <label id="name-field" hidden>
+          <span>Full name</span>
+          <input id="name" name="name" type="text" autocomplete="name" />
+        </label>
+        <label>
+          <span>Email</span>
+          <input id="email" name="email" type="email" autocomplete="username" required />
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required />
+        </label>
+        <p class="error" id="error" role="alert"></p>
+        <button class="submit" id="submit" type="submit">Continue</button>
+      </form>
+
+      <a class="back" href="/">Back to the landing page</a>
+    </main>
+
+    <script>
+      const video = document.getElementById("landscape");
+      const savedTime = Number(sessionStorage.getItem("greengrid-film"));
+      function resumeFilm() {
+        if (!Number.isFinite(savedTime) || savedTime <= 0) return;
+        if (Number.isFinite(video.duration) && savedTime >= video.duration) return;
+        if (Math.abs(video.currentTime - savedTime) < 0.35) return;
+        video.currentTime = savedTime;
+      }
+      if (video.readyState >= 1) resumeFilm();
+      video.addEventListener("loadedmetadata", resumeFilm);
+
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce) {
+        const filmNode = document.getElementById("film");
+        const glow = document.getElementById("glow");
+        const pointer = { x: 0, y: 0 };
+        const film = { value: 0, v: 0 };
+        const filmY = { value: 0, v: 0 };
+        const light = { value: 0, v: 0 };
+        const lightY = { value: 0, v: 0 };
+
+        function spring(state, target, stiffness, damping) {
+          state.v += (target - state.value) * stiffness;
+          state.v *= damping;
+          state.value += state.v;
+        }
+
+        window.addEventListener("pointermove", (event) => {
+          pointer.x = event.clientX / window.innerWidth - 0.5;
+          pointer.y = event.clientY / window.innerHeight - 0.5;
+        }, { passive: true });
+
+        let frame = 0;
+
+        function resting(state, target) {
+          return Math.abs(state.value - target) < 0.0015 && Math.abs(state.v) < 0.0015;
+        }
+
+        function tick() {
+          frame = 0;
+          spring(film, pointer.x, 0.012, 0.9);
+          spring(filmY, pointer.y, 0.012, 0.9);
+          spring(light, pointer.x, 0.007, 0.92);
+          spring(lightY, pointer.y, 0.007, 0.92);
+          filmNode.style.transform = `scale(1.03) translate3d(${(film.value * 2.5).toFixed(2)}px, ${(filmY.value * 1.8).toFixed(2)}px, 0)`;
+          glow.style.transform = `translate3d(-50%, -50%, 0) translate3d(${(light.value * 5).toFixed(2)}px, ${(lightY.value * 3.5).toFixed(2)}px, 0)`;
+          const idle =
+            resting(film, pointer.x) &&
+            resting(filmY, pointer.y) &&
+            resting(light, pointer.x) &&
+            resting(lightY, pointer.y);
+          if (!idle) frame = requestAnimationFrame(tick);
+        }
+
+        window.addEventListener("pointermove", () => {
+          if (!frame) frame = requestAnimationFrame(tick);
+        }, { passive: true });
+        frame = requestAnimationFrame(tick);
+      }
+
+      const tabs = {
+        signin: document.getElementById("tab-signin"),
+        register: document.getElementById("tab-register"),
+      };
+      const title = document.getElementById("title");
+      const lede = document.getElementById("lede");
+      const nameField = document.getElementById("name-field");
+      const nameInput = document.getElementById("name");
+      const password = document.getElementById("password");
+      const error = document.getElementById("error");
+      const submit = document.getElementById("submit");
+      let mode = "signin";
+
+      function select(next) {
+        mode = next;
+        const register = next === "register";
+        tabs.signin.setAttribute("aria-selected", String(!register));
+        tabs.register.setAttribute("aria-selected", String(register));
+        title.textContent = register ? "Create an account" : "Sign in";
+        lede.textContent = register
+          ? "Register a desk login for the GreenGrid portfolio."
+          : "Use your work email to open the operating picture.";
+        nameField.hidden = !register;
+        nameInput.required = register;
+        password.autocomplete = register ? "new-password" : "current-password";
+        submit.textContent = register ? "Create account" : "Continue";
+        error.textContent = "";
+      }
+
+      tabs.signin.addEventListener("click", () => select("signin"));
+      tabs.register.addEventListener("click", () => select("register"));
+
+      document.getElementById("account-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const secret = password.value;
+        if (!email.includes("@") || secret.length < 6) {
+          error.textContent = "Enter a valid email and a password of at least 6 characters.";
+          return;
+        }
+        if (mode === "register" && nameInput.value.trim().length < 2) {
+          error.textContent = "Enter the name to put on the account.";
+          return;
+        }
+        error.textContent = "";
+        submit.disabled = true;
+        submit.textContent = mode === "register" ? "Creating account…" : "Signing in…";
+        window.setTimeout(() => {
+          sessionStorage.setItem("greengrid-user", email);
+          window.location.assign("/overview");
+        }, 500);
+      });
+    </script>
+  </body>
+</html>

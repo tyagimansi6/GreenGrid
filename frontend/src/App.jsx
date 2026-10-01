@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import CinematicIntro from "./components/CinematicIntro";
 import DashboardLayout from "./components/DashboardLayout";
 import EnergyAssistant from "./components/EnergyAssistant";
@@ -57,7 +57,6 @@ function DashboardRoutes() {
 
 export default function App() {
   const location = useLocation();
-  const navigate = useNavigate();
   const motionRef = useRef(null);
   const leaveTimer = useRef(0);
   const [intro, setIntro] = useState(() => location.pathname === "/");
@@ -77,11 +76,13 @@ export default function App() {
     if (leaving) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setLeaving(true);
-    navigate("/overview");
     window.clearTimeout(leaveTimer.current);
     leaveTimer.current = window.setTimeout(() => {
-      setIntro(false);
-      setLeaving(false);
+      const film = document.querySelector("video");
+      if (film && Number.isFinite(film.currentTime)) {
+        sessionStorage.setItem("greengrid-film", String(film.currentTime));
+      }
+      window.location.assign("/login.html");
     }, reduce ? 220 : 900);
   }
 

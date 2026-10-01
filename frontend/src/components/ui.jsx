@@ -38,7 +38,7 @@ export function LivePulse({ updatedAt, light = false }) {
 
 export function PageHeader({ eyebrow, title, lede, updatedAt }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-lg border border-white/25 bg-[#f4f2eb]/72 px-4 py-3 backdrop-blur-sm">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-surface px-4 py-3">
       <div className="max-w-2xl">
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-mist">{eyebrow}</p>
         <h1 className="mt-1 font-display text-3xl font-semibold leading-tight tracking-tight md:text-4xl">{title}</h1>

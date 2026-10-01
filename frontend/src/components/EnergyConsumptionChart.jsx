@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { formatTick, spanHours } from "../format";
 import { theme } from "../theme";
 import TrendChart from "./TrendChart";
@@ -27,7 +27,7 @@ function axisMax(value) {
   return Math.ceil(padded / step) * step;
 }
 
-export default function EnergyConsumptionChart({ data, limit, warning }) {
+function EnergyConsumptionChart({ data, limit, warning }) {
   const [layers, setLayers] = useState({ solar: true, grid: true });
   const span = spanHours(data);
   const labeled = useMemo(
@@ -41,6 +41,16 @@ export default function EnergyConsumptionChart({ data, limit, warning }) {
     return values.filter((value) => value != null);
   });
   const peak = Math.max(limit || 0, warning || 0, ...visible, 1);
+  const ceiling = useMemo(() => axisMax(peak), [peak]);
+  const series = useMemo(
+    () =>
+      [
+        { key: "load_kw", name: "Total consumption", color: theme.ink, width: 2.4, fill: true },
+        layers.solar ? { key: "solar_kw", name: "Solar", color: theme.slate, width: 1.8 } : null,
+        layers.grid ? { key: "grid_kw", name: "Grid", color: theme.bronze, width: 1.8 } : null,
+      ].filter(Boolean),
+    [layers.solar, layers.grid],
+  );
   const toggle = (key) => setLayers((current) => ({ ...current, [key]: !current[key] }));
 
   return (
@@ -54,18 +64,7 @@ export default function EnergyConsumptionChart({ data, limit, warning }) {
         <Toggle on={false} color={theme.sage} label="Wind · unmetered" disabled />
         <Toggle on={layers.grid} color={theme.bronze} label="Grid" onToggle={() => toggle("grid")} />
       </div>
-      <TrendChart
-        data={labeled}
-        max={axisMax(peak)}
-        warning={warning}
-        limit={limit}
-        height={320}
-        series={[
-          { key: "load_kw", name: "Total consumption", color: theme.ink, width: 2.4, fill: true },
-          layers.solar ? { key: "solar_kw", name: "Solar", color: theme.slate, width: 1.8 } : null,
-          layers.grid ? { key: "grid_kw", name: "Grid", color: theme.bronze, width: 1.8 } : null,
-        ].filter(Boolean)}
-      />
+      <TrendChart data={labeled} max={ceiling} warning={warning} limit={limit} height={320} series={series} />
       {(warning || limit) && (
         <p className="mt-2 text-xs text-mist">
           {warning ? "Dashed bronze is the combined warning line. " : ""}
@@ -75,3 +74,5 @@ export default function EnergyConsumptionChart({ data, limit, warning }) {
     </div>
   );
 }
+
+export default memo(EnergyConsumptionChart);
