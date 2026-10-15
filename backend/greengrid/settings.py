@@ -26,7 +26,12 @@ DEBUG = env_flag("DEBUG", True)
 if not DEBUG and SECRET_KEY == "dev-only-greengrid-secret":
     raise RuntimeError("Set SECRET_KEY before running GreenGrid with DEBUG=false.")
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
+ALLOWED_HOSTS = [
+    "greengrid-871p.onrender.com",
+    ".onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -74,18 +79,22 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "greengrid_db",
-        "USER": "greengrid_user",
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "greengrid123"),
-        "HOST": "localhost",
-        "PORT": "3306",
+        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.environ.get("DB_NAME", "greengrid_db"),
+        "USER": os.environ.get("DB_USER", "greengrid_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD")
+        or os.environ.get("MYSQL_PASSWORD", "greengrid123"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
+# Aiven MySQL rejects plaintext connections.
+if DATABASES["default"]["HOST"] not in {"", "localhost", "127.0.0.1"}:
+    DATABASES["default"]["OPTIONS"]["ssl"] = {"check_hostname": False}
 # Hosted deploys (Render) still pass a Postgres URL. Local runs use MySQL above.
 if os.environ.get("DATABASE_URL"):
     DATABASES["default"] = dj_database_url.parse(
