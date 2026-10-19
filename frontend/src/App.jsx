@@ -1,20 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import CinematicIntro from "./components/CinematicIntro";
 import DashboardLayout from "./components/DashboardLayout";
 import EnergyAssistant from "./components/EnergyAssistant";
 import VideoHero from "./components/VideoHero";
-import Alerts from "./pages/Alerts";
-import Analytics from "./pages/Analytics";
-import Billing from "./pages/Billing";
 import Dashboard from "./pages/Dashboard";
-import Facilities from "./pages/Facilities";
-import FacilityDetail from "./pages/FacilityDetail";
-import Grid from "./pages/Grid";
-import Monitoring from "./pages/Monitoring";
-import Renewables from "./pages/Renewables";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
+
+const Alerts = lazy(() => import("./pages/Alerts"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Facilities = lazy(() => import("./pages/Facilities"));
+const FacilityDetail = lazy(() => import("./pages/FacilityDetail"));
+const Grid = lazy(() => import("./pages/Grid"));
+const Monitoring = lazy(() => import("./pages/Monitoring"));
+const Renewables = lazy(() => import("./pages/Renewables"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 function FacilityRoute() {
   const { code } = useParams();

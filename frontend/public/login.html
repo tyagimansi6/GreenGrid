@@ -215,7 +215,7 @@
   <body>
     <div class="film" aria-hidden="true">
       <div class="film-motion" id="film">
-        <video id="landscape" autoplay muted loop playsinline preload="auto" poster="/greengrid-poster.jpg">
+        <video id="landscape" autoplay muted loop playsinline preload="metadata" poster="/greengrid-poster.jpg">
           <source src="/greengrid-landscape.mp4" type="video/mp4" />
         </video>
       </div>
@@ -360,10 +360,8 @@
         error.textContent = "";
         submit.disabled = true;
         submit.textContent = mode === "register" ? "Creating account…" : "Signing in…";
-        window.setTimeout(() => {
-          sessionStorage.setItem("greengrid-user", email);
-          window.location.assign("/overview");
-        }, 500);
+        sessionStorage.setItem("greengrid-user", email);
+        window.location.assign("/overview");
       });
     </script>
   </body>

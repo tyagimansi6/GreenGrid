@@ -6,6 +6,39 @@ const failures = new Map();
 const retries = new Set();
 const watchers = new Set();
 let pending = 0;
+let leadClaimed = false;
+let leadOpened = false;
+let leadTimer = 0;
+let openLeadGate = () => {};
+const leadGate = new Promise((resolve) => {
+  openLeadGate = resolve;
+});
+
+function claimLead() {
+  leadClaimed = true;
+  window.clearTimeout(leadTimer);
+}
+
+function releaseLead() {
+  if (leadOpened) return;
+  leadOpened = true;
+  window.clearTimeout(leadTimer);
+  openLeadGate();
+}
+
+export function whenDashboardReady() {
+  return leadGate;
+}
+
+function waitForLead() {
+  if (leadOpened) return Promise.resolve();
+  if (!leadClaimed && !leadTimer) {
+    leadTimer = window.setTimeout(() => {
+      if (!leadClaimed) releaseLead();
+    }, 0);
+  }
+  return leadGate;
+}
 
 function runShared(fetcher) {
   const current = flights.get(fetcher);
@@ -51,7 +84,7 @@ export function useDocumentTitle(title) {
   }, [title]);
 }
 
-export function usePoll(fetcher, intervalMs = 5000) {
+export function usePoll(fetcher, intervalMs = 5000, { lead = false } = {}) {
   const id = useId();
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
@@ -67,9 +100,14 @@ export function usePoll(fetcher, intervalMs = 5000) {
     let cancelled = false;
     let timer = 0;
     let followedUp = false;
+    if (lead) claimLead();
 
     async function tick(manual) {
       if (cancelled) return null;
+      if (!lead && !manual) {
+        await waitForLead();
+        if (cancelled) return null;
+      }
       window.clearTimeout(timer);
       const fetcherNow = fetcherRef.current;
       const quiet = dataRef.current != null && !manual;
@@ -111,6 +149,7 @@ export function usePoll(fetcher, intervalMs = 5000) {
         }
         return null;
       } finally {
+        if (lead) releaseLead();
         if (tracked) {
           pending = Math.max(0, pending - 1);
           notify();
@@ -131,7 +170,7 @@ export function usePoll(fetcher, intervalMs = 5000) {
       failures.delete(id);
       notify();
     };
-  }, [id, intervalMs]);
+  }, [id, intervalMs, lead]);
 
   const reload = useCallback(() => reloadRef.current(), []);
 

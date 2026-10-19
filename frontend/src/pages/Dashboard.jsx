@@ -14,7 +14,7 @@ import { carbonTonnesFromSolar, seriesPeak } from "../metrics";
 
 export default function Dashboard() {
   useDocumentTitle("Overview");
-  const dash = usePoll(api.dashboard, 5000);
+  const dash = usePoll(api.dashboard, 5000, { lead: true });
   const bill = usePoll(api.billing, 15000);
 
   if (dash.loading && !dash.data) return <LoadingState />;

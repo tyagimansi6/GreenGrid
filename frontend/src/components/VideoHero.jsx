@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { whenDashboardReady } from "../hooks";
 
 export default function VideoHero({ motionRef }) {
   const videoRef = useRef(null);
@@ -6,11 +7,23 @@ export default function VideoHero({ motionRef }) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    const play = video.play();
-    if (play && typeof play.catch === "function") {
-      play.catch(() => setNeedsPlay(true));
-    }
+    if (!video) return undefined;
+    let cancelled = false;
+    const start = () => {
+      if (cancelled) return;
+      const play = video.play();
+      if (play && typeof play.catch === "function") {
+        play.catch(() => {
+          if (!cancelled) setNeedsPlay(true);
+        });
+      }
+    };
+    whenDashboardReady().then(() => {
+      if (!cancelled) start();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function start() {
@@ -29,7 +42,7 @@ export default function VideoHero({ motionRef }) {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="none"
           poster="/greengrid-poster.jpg"
           aria-hidden="true"
         >

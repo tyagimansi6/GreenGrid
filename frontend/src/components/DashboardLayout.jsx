@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ApiStatusBanner } from "./ui";
 import Sidebar from "./Sidebar";
@@ -61,7 +61,9 @@ export default function DashboardLayout() {
           <Topbar onMenu={openMenu} />
           <main id="main" className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
             <ApiStatusBanner />
-            <MainOutlet />
+            <Suspense fallback={<p className="text-sm text-mist">Loading page…</p>}>
+              <MainOutlet />
+            </Suspense>
           </main>
         </div>
       </div>
