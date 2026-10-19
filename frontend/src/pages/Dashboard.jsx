@@ -18,9 +18,16 @@ export default function Dashboard() {
   const bill = usePoll(api.billing, 15000);
 
   if (dash.loading && !dash.data) return <LoadingState />;
-  if (!dash.data) return <ErrorState message={dash.error} onRetry={dash.reload} />;
+  if (!dash.data?.kpis || !dash.data?.portfolio) {
+    return (
+      <ErrorState
+        message={dash.error || "The dashboard response did not include portfolio data."}
+        onRetry={dash.reload}
+      />
+    );
+  }
 
-  const { kpis, portfolio, facilities, alerts } = dash.data;
+  const { kpis, portfolio, facilities = [], alerts = [] } = dash.data;
   const peak = seriesPeak(portfolio.series, "grid_kw");
   const carbon = carbonTonnesFromSolar(kpis.solar_kwh_24h);
 

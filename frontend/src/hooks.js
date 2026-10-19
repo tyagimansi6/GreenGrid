@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const pollCache = new Map();
 
@@ -14,8 +14,12 @@ export function usePoll(fetcher, intervalMs = 5000) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(() => !seeded);
   const [updatedAt, setUpdatedAt] = useState(() => seeded?.updatedAt ?? null);
+  const inflight = useRef(false);
 
   const reload = useCallback(async () => {
+    if (inflight.current) return null;
+    inflight.current = true;
+    setLoading(true);
     try {
       const next = await fetcher();
       const stamp = new Date();
@@ -25,9 +29,12 @@ export function usePoll(fetcher, intervalMs = 5000) {
       setUpdatedAt(stamp);
       return next;
     } catch (err) {
-      setError(err.message || "Request failed.");
+      const message = err.message || "Request failed.";
+      console.error("[greengrid] poll failed", message);
+      setError(message);
       return null;
     } finally {
+      inflight.current = false;
       setLoading(false);
     }
   }, [fetcher]);

@@ -10,6 +10,16 @@ function apiBase() {
 }
 
 const BASE = apiBase();
+const REQUEST_TIMEOUT_MS = 60000;
+
+function timeoutSignal(ms) {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
 
 export class ApiError extends Error {
   constructor(message, payload) {
@@ -32,15 +42,21 @@ function messageFrom(payload, status) {
 }
 
 async function request(path, options = {}) {
+  const url = `${BASE}${path}`;
   const headers = {
     ...(options.body ? { "Content-Type": "application/json" } : {}),
     ...(options.headers || {}),
   };
   let response;
   try {
-    response = await fetch(`${BASE}${path}`, { ...options, headers });
-  } catch {
-    throw new ApiError("The browser could not reach the GreenGrid API.");
+    response = await fetch(url, { ...options, headers, signal: timeoutSignal(REQUEST_TIMEOUT_MS) });
+  } catch (err) {
+    const timedOut = err?.name === "TimeoutError" || err?.name === "AbortError";
+    const message = timedOut
+      ? `The GreenGrid API did not respond within ${REQUEST_TIMEOUT_MS / 1000}s (${url}). The Render service may still be waking up.`
+      : `The browser could not reach the GreenGrid API (${url}).`;
+    console.error("[greengrid]", message, err);
+    throw new ApiError(message);
   }
 
   const text = await response.text();
@@ -53,7 +69,14 @@ async function request(path, options = {}) {
     }
   }
   if (!response.ok) {
-    throw new ApiError(messageFrom(payload, response.status), payload);
+    const message = messageFrom(payload, response.status);
+    console.error("[greengrid]", response.status, url, message);
+    throw new ApiError(message, payload);
+  }
+  if (payload == null) {
+    const message = `The GreenGrid API returned a non-JSON response from ${url}.`;
+    console.error("[greengrid]", message);
+    throw new ApiError(message);
   }
   return payload;
 }

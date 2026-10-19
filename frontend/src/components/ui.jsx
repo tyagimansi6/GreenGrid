@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { statusMeta, default as StatusBadge } from "./StatusBadge";
 
 export { statusMeta, StatusBadge };
@@ -50,8 +51,19 @@ export function PageHeader({ eyebrow, title, lede, updatedAt }) {
 }
 
 export function LoadingState() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(id);
+  }, []);
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Loading GreenGrid">
+    <div className="space-y-4" aria-busy="true" aria-live="polite" aria-label="Loading GreenGrid">
+      <p className="text-sm text-mist">Contacting the GreenGrid API…</p>
+      {slow && (
+        <p className="max-w-xl text-sm leading-6 text-mist">
+          Still waiting. The Render service may be waking up. If it does not answer within a minute, this page shows an error you can retry.
+        </p>
+      )}
       <div className="h-28 animate-pulse rounded-lg border border-line bg-surface" />
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="h-80 animate-pulse rounded-lg border border-line bg-surface lg:col-span-2" />
@@ -67,7 +79,7 @@ export function ErrorState({ message, onRetry }) {
       <h2 className="font-display text-2xl font-semibold">The GreenGrid API is offline</h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-mist">{message}</p>
       <p className="mt-2 max-w-xl text-sm leading-6 text-mist">
-        Start Django from the backend folder, then retry. The Vite dev server proxies /api to port 8000.
+        The hosted API is https://greengrid-871p.onrender.com. A sleeping instance can take a minute to answer. If this keeps failing, confirm the Render service is running, then retry. Locally, Django needs to be running on port 8000.
       </p>
       <button
         type="button"
