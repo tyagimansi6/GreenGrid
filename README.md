@@ -298,11 +298,12 @@ cd backend\ml
 
 Frontend on Vercel, API on Render.
 
-**Render.** Use `render.yaml`, or a Python web service with root directory `backend`.
+**Render.** Use `render.yaml`, or a Python web service whose root directory is the repository root (leave Root Directory blank). `requirements.txt` and `manage.py` live in `backend/`.
 
-- Build: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-- Start: `python manage.py migrate && python manage.py seed_demo && gunicorn greengrid.wsgi:application --bind 0.0.0.0:$PORT`
+- Build: `pip install -r backend/requirements.txt && python backend/manage.py collectstatic --noinput`
+- Start: `python backend/manage.py migrate && python backend/manage.py createsuperuser_if_none_exists && python backend/manage.py seed_demo && gunicorn greengrid.wsgi:application --bind 0.0.0.0:$PORT --chdir backend`
 - Set `DEBUG=false`, a real `SECRET_KEY`, and `ALLOWED_HOSTS=.onrender.com`
+- Set `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, and `DJANGO_SUPERUSER_PASSWORD`. The start command creates that admin only when the database has no superuser.
 - The blueprint sets `PYTHON_VERSION=3.12.8` and `TIME_ZONE=Asia/Kolkata`
 
 **Vercel.** Project root `frontend`. Set `VITE_API_URL` to the Render origin (for example `https://greengrid-api.onrender.com`) and redeploy. Preview hosts on `*.vercel.app` are already allowed by CORS. A custom domain needs `CORS_ALLOWED_ORIGINS` on the API.
