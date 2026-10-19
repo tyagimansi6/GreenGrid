@@ -1,4 +1,15 @@
-const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const RENDER_API = "https://greengrid-871p.onrender.com";
+
+function apiBase() {
+  const configured = (import.meta.env.VITE_API_URL || "").trim().replace(/\/$/, "");
+  const local = !configured || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(configured);
+  // Vite inlines VITE_API_URL at build time. The dev server proxies /api to
+  // localhost; a production bundle must not, or the browser sits on (pending).
+  if (import.meta.env.PROD && local) return RENDER_API;
+  return configured;
+}
+
+const BASE = apiBase();
 
 export class ApiError extends Error {
   constructor(message, payload) {
