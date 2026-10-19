@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { retryAllPolls, useApiStatus } from "../hooks";
 import { statusMeta, default as StatusBadge } from "./StatusBadge";
 
 export { statusMeta, StatusBadge };
@@ -50,6 +51,32 @@ export function PageHeader({ eyebrow, title, lede, updatedAt }) {
   );
 }
 
+export function ApiStatusBanner() {
+  const status = useApiStatus();
+  if (!status.loading && !status.error) return null;
+  return (
+    <div
+      className="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-sm shadow-card"
+      role={status.error ? "alert" : "status"}
+    >
+      {status.error ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-3xl leading-6 text-mist">{status.error}</p>
+          <button
+            type="button"
+            onClick={retryAllPolls}
+            className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-ivory"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <p className="text-mist">Contacting the GreenGrid API…</p>
+      )}
+    </div>
+  );
+}
+
 export function LoadingState() {
   const [slow, setSlow] = useState(false);
   useEffect(() => {
@@ -61,7 +88,7 @@ export function LoadingState() {
       <p className="text-sm text-mist">Contacting the GreenGrid API…</p>
       {slow && (
         <p className="max-w-xl text-sm leading-6 text-mist">
-          Still waiting. The Render service may be waking up. If it does not answer within a minute, this page shows an error you can retry.
+          Still waiting. If the API does not answer, this page leaves the skeleton and shows an error you can retry.
         </p>
       )}
       <div className="h-28 animate-pulse rounded-lg border border-line bg-surface" />

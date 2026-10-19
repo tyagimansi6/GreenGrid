@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { ApiStatusBanner } from "./ui";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
@@ -59,6 +60,7 @@ export default function DashboardLayout() {
         <div className="min-w-0 flex-1">
           <Topbar onMenu={openMenu} />
           <main id="main" className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+            <ApiStatusBanner />
             <MainOutlet />
           </main>
         </div>

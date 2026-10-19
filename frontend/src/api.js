@@ -10,7 +10,7 @@ function apiBase() {
 }
 
 const BASE = apiBase();
-const REQUEST_TIMEOUT_MS = 60000;
+const REQUEST_TIMEOUT_MS = 20000;
 
 function timeoutSignal(ms) {
   if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
